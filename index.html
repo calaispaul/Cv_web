@@ -20,7 +20,7 @@
 
     /* ── CURSEUR ÉTOILE ── */
     #cur-star{position:fixed;pointer-events:none;z-index:9999;width:36px;height:36px;transform:translate(-50%,-50%)}
-    .cur-trail{position:fixed;pointer-events:none;z-index:9997;border-radius:50%;background:var(--y);transform:translate(-50%,-50%);animation:trailFade .45s ease forwards}
+    .cur-trail{position:fixed;pointer-events:none;z-index:9997;border-radius:50%;transform:translate(-50%,-50%);animation:trailFade .45s ease forwards}
     @keyframes trailFade{0%{opacity:.65;width:6px;height:6px}100%{opacity:0;width:1px;height:1px}}
 
     /* ── PARTICLES ── */
@@ -372,6 +372,13 @@
       #game-controls{font-size:.42rem;letter-spacing:.14em}
       .letter-slot{width:30px;height:30px;font-size:1.1rem}
       .lives-bar{font-size:.6rem}
+    }
+      /* ── Forcer cursor:none sur tous les éléments interactifs ── */
+    a, button, [role="button"],
+    .proj-card, .nav-links a, .cta-btn, .cv-dl-btn,
+    .modal-back, #modal-back, .game-btn, #btn-skip-game,
+    .sk-tag, .soft-item {
+      cursor: none !important;
     }
   </style>
 </head>
@@ -894,27 +901,57 @@ const starCanvas = document.getElementById('cur-star');
 const starCtx    = starCanvas.getContext('2d');
 starCanvas.width = starCanvas.height = 36;
 let mx=0, my=0, starAngle=0, curFrameCount=0;
+let starWhite = false; // true = étoile blanche sur hover interactif
+
 function drawStar(a){
+  // Mode jaune (défaut) : base jaune vif, milieu orange-doré, pointe jaune-or
+  // Mode blanc (hover interactif) : tout blanc pur
+  const base  = starWhite ? 'rgba(255,255,255,1)' : 'rgba(245,194,0,1)';
+  const mid   = starWhite ? 'rgba(255,255,255,1)' : 'rgba(255,200,40,1)';
+  const tip   = starWhite ? 'rgba(255,255,255,1)' : 'rgba(255,180,0,1)';
+  const haloC = starWhite ? 'rgba(255,255,255,.2)': 'rgba(245,194,0,.25)';
+  const haloE = starWhite ? 'rgba(255,255,255,0)' : 'rgba(245,194,0,0)';
+
   starCtx.clearRect(0,0,36,36); starCtx.save(); starCtx.translate(18,18); starCtx.rotate(a);
-  const halo=starCtx.createRadialGradient(0,0,2,0,0,16); halo.addColorStop(0,'rgba(245,194,0,.25)'); halo.addColorStop(1,'rgba(245,194,0,0)');
-  starCtx.beginPath(); starCtx.arc(0,0,16,0,Math.PI*2); starCtx.fillStyle=halo; starCtx.fill();
+
+  // Halo
+  const halo=starCtx.createRadialGradient(0,0,2,0,0,16);
+  halo.addColorStop(0,haloC); halo.addColorStop(1,haloE);
+  starCtx.beginPath(); starCtx.arc(0,0,16,0,Math.PI*2);
+  starCtx.fillStyle=halo; starCtx.fill();
+
+  // 4 branches — dégradé base → tip
   for(let i=0;i<4;i++){
     starCtx.save(); starCtx.rotate(i/4*Math.PI*2);
-    starCtx.beginPath(); starCtx.moveTo(0,0); starCtx.bezierCurveTo(2.5,-3,2,-8,0,-16); starCtx.bezierCurveTo(-2,-8,-2.5,-3,0,0);
-    const g=starCtx.createLinearGradient(0,0,0,-16); g.addColorStop(0,'rgba(245,194,0,1)'); g.addColorStop(.5,'rgba(255,220,80,1)'); g.addColorStop(1,'rgba(255,255,220,1)');
+    starCtx.beginPath();
+    starCtx.moveTo(0,0);
+    starCtx.bezierCurveTo(2.5,-3,2,-8,0,-16);
+    starCtx.bezierCurveTo(-2,-8,-2.5,-3,0,0);
+    const g=starCtx.createLinearGradient(0,0,0,-16);
+    g.addColorStop(0,base); g.addColorStop(.5,mid); g.addColorStop(1,tip);
     starCtx.fillStyle=g; starCtx.fill(); starCtx.restore();
   }
+
+  // Centre brillant
   starCtx.beginPath(); starCtx.rect(-2.5,-2.5,5,5);
-  const cg=starCtx.createRadialGradient(0,0,0,0,0,3); cg.addColorStop(0,'rgba(255,255,255,1)'); cg.addColorStop(1,'rgba(245,194,0,.9)');
+  const cg=starCtx.createRadialGradient(0,0,0,0,0,3);
+  cg.addColorStop(0,'rgba(255,255,255,1)'); cg.addColorStop(1,base);
   starCtx.fillStyle=cg; starCtx.fill(); starCtx.restore();
 }
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+
+/* Sélecteurs des éléments interactifs qui font passer l'étoile en blanc */
+const INTERACTIVE = 'a, button, .proj-card, .cta-btn, .cv-dl-btn, #modal-back, .game-btn, #btn-skip-game, .nav-links a, [role="button"]';
+
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  starWhite = !!e.target.closest(INTERACTIVE);
+});
 let curTrailEnabled = true;
 (function tickCursor(){
   curFrameCount++; starAngle+=.04;
   starCanvas.style.left=mx+'px'; starCanvas.style.top=my+'px';
   drawStar(starAngle);
-  if(curTrailEnabled && curFrameCount%3===0){const t=document.createElement('div');t.className='cur-trail';t.style.left=mx+'px';t.style.top=my+'px';t.style.width=t.style.height=(2+Math.random()*4)+'px';document.body.appendChild(t);setTimeout(()=>t.remove(),450);}
+  if(curTrailEnabled && curFrameCount%3===0){const t=document.createElement('div');t.className='cur-trail';const trailCol=starWhite?'#ffffff':'#F5C200';t.style.cssText=`left:${mx}px;top:${my}px;background:${trailCol};width:${(2+Math.random()*4)}px;height:${(2+Math.random()*4)}px;`;document.body.appendChild(t);setTimeout(()=>t.remove(),450);}
   requestAnimationFrame(tickCursor);
 })();
 
@@ -1633,10 +1670,107 @@ window.addEventListener('resize',()=>{
 
 /* ══ MODAL PROJETS ══ */
 const PROJECTS={
-  1:{num:'01',title:'Station Météo · Dashboard',tech:['Arduino','C','Électronique','Capteurs'],content:'<p class="modal-section-label">À propos</p><div class="modal-body"><p><em style="color:var(--y3)">✦ Contenu détaillé à venir — dis-moi ce que tu veux mettre ici !</em></p></div>'},
-  2:{num:'02',title:'Jeu de la Vie',tech:['C++','POO','Algorithme'],content:'<p class="modal-section-label">À propos</p><div class="modal-body"><p><em style="color:var(--y3)">✦ Contenu détaillé à venir — dis-moi ce que tu veux mettre ici !</em></p></div>'},
-  3:{num:'03',title:'Funkytown · Réseau Urbain',tech:['SQL','Réseau','VLAN','Cisco'],content:'<p class="modal-section-label">À propos</p><div class="modal-body"><p><em style="color:var(--y3)">✦ Contenu détaillé à venir — dis-moi ce que tu veux mettre ici !</em></p></div>'},
-  4:{num:'04',title:'Site Web · Stage',tech:['PHP','HTML','CSS'],content:'<p class="modal-section-label">À propos</p><div class="modal-body"><p><em style="color:var(--y3)">✦ Contenu détaillé à venir — dis-moi ce que tu veux mettre ici !</em></p></div>'},
+  1:{
+    num:'01',
+    title:'Station Météo · WWW',
+    tech:['Arduino','C','ATmega328','I2C','SPI','UART','Carte SD','GPS','LED RGB'],
+    content:`
+      <p class="modal-section-label">Contexte</p>
+      <div class="modal-body">
+        <p>L'Agence Internationale pour la Vigilance Météorologique (AIVM) souhaitait déployer des navires équipés de stations météo embarquées capables de mesurer différents paramètres environnementaux — température, pression, humidité, luminosité, position GPS — afin d'améliorer la détection et la prévention des phénomènes météorologiques dangereux.</p>
+        <p>J'ai assumé le rôle de <strong style="color:var(--y)">Chef de Groupe</strong> sur ce projet, en équipe avec Lucas Baye et Enzo Verdin.</p>
+      </div>
+      <p class="modal-section-label">Problématique</p>
+      <div class="modal-body">
+        <p>Comment concevoir une station météo embarquée capable de collecter, enregistrer et signaler des données météorologiques sur un navire en mer, utilisable par un membre d'équipage non spécialiste ?</p>
+      </div>
+      <p class="modal-section-label">Architecture du système</p>
+      <div class="modal-body">
+        <p>Le système est articulé autour d'une carte Arduino (ATmega328) servant d'unité centrale. Elle orchestre 9 capteurs via les bus I2C, SPI, UART et entrées analogiques, et fonctionne selon une <strong style="color:var(--y)">machine à états</strong> à 4 modes :</p>
+        <ul class="modal-list">
+          <li><strong style="color:var(--y)">Mode Standard</strong> — collecte continue de tous les capteurs (GPS inclus), enregistrement sur carte SD à intervalle régulier.</li>
+          <li><strong style="color:var(--y)">Mode Économique</strong> — intervalle doublé, GPS lu une fois sur deux pour économiser l'énergie.</li>
+          <li><strong style="color:var(--y)">Mode Configuration</strong> — modification des paramètres via port série (démarré en maintenant le bouton Rouge).</li>
+          <li><strong style="color:var(--y)">Mode Maintenance</strong> — affichage des données capteurs en série pour débogage, sans enregistrement SD.</li>
+        </ul>
+      </div>
+      <p class="modal-section-label">Points techniques clés</p>
+      <div class="modal-body">
+        <p>Le code évite tout <code>delay()</code> dans la boucle principale — la gestion du temps est assurée par <code>millis()</code> (intervalles, timeouts, anti-rebond, clignotement LED). Les boutons sont gérés par interruptions matérielles (ISR) qui lèvent uniquement des drapeaux, la logique étant traitée dans la boucle principale.</p>
+        <p>Le retour visuel est assuré par une LED RGB : vert = système prêt, rouge+jaune = problème GPS, rouge+vert = erreur capteur, rouge+blanc = problème de stockage.</p>
+        <p>Le déploiement du programme se fait via <code>arduino-cli</code> en ligne de commande, sans IDE graphique.</p>
+      </div>
+      <p class="modal-section-label">Ce que j'ai appris</p>
+      <div class="modal-body">
+        <p>Conception d'un système embarqué autonome, gestion des interruptions, programmation sans blocage avec <code>millis()</code>, architecture en machine à états, communication multi-protocoles (I2C / SPI / UART), et rédaction d'une documentation technique et utilisateur complète.</p>
+      </div>
+    `
+  },
+  2:{
+    num:'02',
+    title:'Jeu de la Vie',
+    tech:['C++','POO','Algorithme','Automate cellulaire'],
+    content:`
+      <p class="modal-section-label">À propos</p>
+      <div class="modal-body">
+        <p>Implémentation de l'automate cellulaire de John Conway en C++ avec une architecture orientée objet. Chaque cellule est un objet dont l'état évolue selon les règles classiques du Jeu de la Vie : une cellule vivante avec 2 ou 3 voisins survit, une cellule morte avec exactement 3 voisins naît.</p>
+      </div>
+      <p class="modal-section-label">Objectifs pédagogiques</p>
+      <div class="modal-body">
+        <p>Ce projet avait pour but de maîtriser les fondamentaux de la <strong style="color:var(--y)">programmation orientée objet</strong> en C++ : encapsulation, classes, héritage, et gestion de la mémoire. La grille est représentée par une matrice d'objets <code>Cellule</code>, mise à jour à chaque génération selon l'état des voisins.</p>
+      </div>
+      <p class="modal-section-label">Ce que j'ai appris</p>
+      <div class="modal-body">
+        <p>Architecture POO en C++, manipulation de tableaux 2D, algorithmes d'itération sur grilles, et optimisation des calculs de voisinage.</p>
+      </div>
+    `
+  },
+  3:{
+    num:'03',
+    title:'Funkytown · Réseau Urbain',
+    tech:['Cisco Packet Tracer','VLAN','VLSM','IPv6','DHCP','DNS','EtherChannel','Wi-Fi WLC','Routage'],
+    content:`
+      <p class="modal-section-label">Contexte</p>
+      <div class="modal-body">
+        <p>Le maire de FunkyTown lance un plan numérique pour moderniser la ville. L'ESN eXia doit concevoir et déployer le réseau informatique de quatre clients aux besoins différents : son propre bureau (eXia), la bibliothèque municipale, le site industriel Engie et l'entreprise Digiplex. L'objectif est de relier ces sites tout en assurant leur accès au Web et à un Datacenter distant.</p>
+        <p>Projet réalisé en équipe avec Lucas Beye et Enzo Verdin.</p>
+      </div>
+      <p class="modal-section-label">Problématique</p>
+      <div class="modal-body">
+        <p>Comment construire une infrastructure réseau fiable, sécurisée et évolutive pour des clients ayant des exigences techniques variées — Wi-Fi public, segmentation VLAN, tunnel IPv6 ?</p>
+      </div>
+      <p class="modal-section-label">Déploiement en 5 phases</p>
+      <div class="modal-body">
+        <ul class="modal-list">
+          <li><strong style="color:var(--y)">Phase 1 — eXia (cœur de réseau)</strong> : installation du routeur principal, tunnel IPv6, serveurs DNS et FTP locaux.</li>
+          <li><strong style="color:var(--y)">Phase 2 — Bibliothèque</strong> : remplacement du routeur, serveur DHCP pour postes en libre-service.</li>
+          <li><strong style="color:var(--y)">Phase 3 — Engie</strong> : segmentation VLAN 10/11/12 (Technique, Commercial, Invités), adressage VLSM optimisé.</li>
+          <li><strong style="color:var(--y)">Phase 4 — Digiplex</strong> : EtherChannel pour agrégation de liens, déploiement WLC pour gestion centralisée du Wi-Fi, 8 sous-réseaux /24.</li>
+          <li><strong style="color:var(--y)">Phase 5 — Recette</strong> : tests d'interconnexion globale, validation du routage inter-sites et de l'accès Web.</li>
+        </ul>
+      </div>
+      <p class="modal-section-label">Points techniques clés</p>
+      <div class="modal-body">
+        <p>Application du VLSM chez Engie pour optimiser l'espace d'adressage : /25 pour le VLAN Technique (126 hôtes), /26 pour le Commercial (62 hôtes), /27 pour les Invités (30 hôtes), /30 pour le serveur DHCP/DNS isolé. Chez Digiplex, un réseau de Management dédié (192.168.80.0/24) isole l'administration SSH des équipements réseau.</p>
+        <p>Le chemin critique identifié via PERT passe par la configuration de Digiplex — tâche la plus complexe, déterminant la date de fin du projet.</p>
+      </div>
+      <p class="modal-section-label">Ce que j'ai appris</p>
+      <div class="modal-body">
+        <p>Conception d'une architecture End-to-End, expertise en commutation (switching), maîtrise du routage niveau 3, infrastructure de services réseau, et compétences en troubleshooting (instabilité des trunks, routage inter-VLAN, incompatibilités matérielles).</p>
+      </div>
+    `
+  },
+  4:{
+    num:'04',
+    title:'Site Web · Stage',
+    tech:['PHP','HTML','CSS'],
+    content:`
+      <p class="modal-section-label">À propos</p>
+      <div class="modal-body">
+        <p>Création d'un site web vitrine dans le cadre de la recherche de stage. Projet en cours de développement.</p>
+      </div>
+    `
+  },
 };
 const modal=document.getElementById('proj-modal');
 const modalBg=document.getElementById('proj-modal-bg');
