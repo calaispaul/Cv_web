@@ -94,6 +94,14 @@
     .game-btn{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.3em;padding:10px 26px;border:1px solid rgba(245,194,0,.4);background:rgba(245,194,0,.07);color:var(--y);cursor:none;text-transform:uppercase;transition:all .3s;margin:4px}
     .game-btn:hover{background:rgba(245,194,0,.14);border-color:var(--y)}
     #game-controls{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.22em;color:rgba(245,194,0,.28);text-align:center;margin-top:7px;padding:0 1rem}
+    #btn-skip-game{
+      margin-top:16px;font-family:'Cinzel',serif;font-size:.52rem;
+      letter-spacing:.38em;color:rgba(245,194,0,.45);text-transform:uppercase;
+      background:none;border:1px solid rgba(245,194,0,.18);
+      cursor:none;padding:8px 22px;
+      transition:color .3s,border-color .3s;display:block;
+    }
+    #btn-skip-game:hover{color:var(--y);border-color:rgba(245,194,0,.45)}
 
     /* ══════════════════════════
        SITE
@@ -321,8 +329,9 @@
       .s-label{font-size:.52rem}
       .p-text{font-size:1.05rem}
       .p-grid{grid-template-columns:1fr;gap:28px}
-      .photo-placeholder{max-width:220px;margin:0 auto}
-      .profil-photo{max-width:220px;margin:0 auto;display:block}
+      .photo-frame{max-width:140px;margin:0 auto}
+      .photo-placeholder{max-width:140px;margin:0 auto}
+      .profil-photo{max-width:140px;margin:0 auto;display:block}
       .timeline{padding-left:22px}
       .tl-gem{left:-26px}
       .tl-title{font-size:.95rem}
@@ -414,6 +423,7 @@
     <span class="life-icon" id="life-2">❤</span>
   </div>
   <p id="game-controls">🖱 Déplace la souris partout · 👆 Swipe sur mobile</p>
+  <button id="btn-skip-game">— Passer —</button>
 </div>
 
 <!-- ══════════ SITE ══════════ -->
@@ -1063,7 +1073,9 @@ const msgS=document.getElementById('game-msg-sub');
 const msgB=document.getElementById('game-msg-btns');
 
 /* Taille responsive */
-const GW=Math.min(720,window.innerWidth-16);
+/* Canvas plus petit sur mobile pour éviter les lags */
+const isMobile=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const GW=isMobile ? Math.min(480,window.innerWidth-8) : Math.min(720,window.innerWidth-16);
 const GH=Math.round(GW*.58);
 gc.width=GW; gc.height=GH;
 gc.style.width=GW+'px'; gc.style.height=GH+'px';
@@ -1074,26 +1086,34 @@ const C={bg:'#000005',ship:'#F5C200',shipD:'#B8920A',bullet:'#ffe066',
   text:'#F5C200',hit:'#ff3300'};
 
 /* Étoiles BG */
-const bgStars=Array.from({length:55},()=>({x:Math.random()*GW,y:Math.random()*GH,s:.4+Math.random()*1.4,sp:.2+Math.random()*.7,c:Math.random()>.7?'rgba(245,194,0,.5)':'#fff'}));
+const bgStars=Array.from({length:isMobile?28:55},()=>({x:Math.random()*GW,y:Math.random()*GH,s:.4+Math.random()*1.4,sp:.2+Math.random()*.7,c:Math.random()>.7?'rgba(245,194,0,.5)':'#fff'}));
 
 let state='waiting',collected=[],lives=3,obstacles=[],letterItems=[],particles=[];
 let obsTimer=0,letTimer=0,scrollSpeed=1.2,gFrameCount=0;
 let gameDone=false;
 const LETTERS=['P','A','U','L'];
 
-/* Position cible souris — X et Y */
+/* Position cible souris — écoute sur document entier
+   La souris peut sortir du canvas, le vaisseau suit quand même */
 let mouseTargetX=GW*.11, mouseTargetY=GH/2;
 const gcRect=()=>gc.getBoundingClientRect();
-gc.addEventListener('mousemove',e=>{
+
+document.addEventListener('mousemove',e=>{
+  // Ne traiter que si le jeu est actif
+  if(state!=='playing'&&state!=='waiting') return;
   const r=gcRect();
-  mouseTargetX=Math.max(0,Math.min(GW,(e.clientX-r.left)*(GW/r.width)));
-  mouseTargetY=Math.max(0,Math.min(GH,(e.clientY-r.top)*(GH/r.height)));
+  const scale=GW/r.width;
+  // Mapper les coordonnées écran → canvas (peut dépasser, on clamp)
+  mouseTargetX=Math.max(0,Math.min(GW,(e.clientX-r.left)*scale));
+  mouseTargetY=Math.max(0,Math.min(GH,(e.clientY-r.top)*scale));
 });
 /* Touch — suivi précis et réactif */
 function updateTouchPos(e){
   const r=gcRect(),t=e.touches[0];
-  mouseTargetX=Math.max(ship.w/2,Math.min(GW-ship.w/2,(t.clientX-r.left)*(GW/r.width)));
-  mouseTargetY=Math.max(ship.h/2,Math.min(GH-ship.h/2,(t.clientY-r.top)*(GH/r.height)));
+  const scale=GW/r.width;                        // ratio canvas/affichage
+  const OFFSET_PX=70*scale;                      // 70px au-dessus du doigt
+  mouseTargetX=Math.max(ship.w/2,Math.min(GW-ship.w/2,(t.clientX-r.left)*scale));
+  mouseTargetY=Math.max(ship.h/2,Math.min(GH-ship.h/2,(t.clientY-r.top)*scale-OFFSET_PX));
 }
 gc.addEventListener('touchstart',e=>{
   e.preventDefault();
@@ -1260,8 +1280,15 @@ function endGame(win){
   msgT.textContent=win?'✦ PAUL ✦':'GAME OVER';
   msgS.textContent=win?'Portfolio débloqué !':'Réessaie ou passe directement';
   msgB.innerHTML='';
-  if(win){const b=document.createElement('button');b.className='game-btn';b.textContent='Entrer';b.onclick=enterSite;msgB.appendChild(b);}
-  else{const r=document.createElement('button');r.className='game-btn';r.textContent='Réessayer';r.onclick=_startGame_inner;const s=document.createElement('button');s.className='game-btn';s.textContent='Passer';s.onclick=enterSite;msgB.appendChild(r);msgB.appendChild(s);}
+  if(win){
+    const replay=document.createElement('button');replay.className='game-btn';replay.textContent='Rejouer';replay.onclick=_startGame_inner;
+    const enter=document.createElement('button');enter.className='game-btn';enter.textContent='Entrer';enter.onclick=enterSite;
+    msgB.appendChild(replay);msgB.appendChild(enter);
+  } else {
+    const r=document.createElement('button');r.className='game-btn';r.textContent='Rejouer';r.onclick=_startGame_inner;
+    const s=document.createElement('button');s.className='game-btn';s.textContent='Passer';s.onclick=enterSite;
+    msgB.appendChild(r);msgB.appendChild(s);
+  }
   msg.classList.add('show');
 }
 
@@ -1305,7 +1332,7 @@ function gLoop(){
       o.x+=o.vx;o.y+=o.vy;if(o.y-o.size<0||o.y+o.size>GH)o.vy*=-1;
       drawObs(o);
       if(ship.invincible===0&&collide(ship.x+4,ship.y+3,ship.w-8,ship.h-6,o.x-o.size,o.y-o.size,o.size*2,o.size*2)){
-        lives--;ship.invincible=80;spawnParticles(ship.x+18,ship.y+10,C.hit,10);updateLives();if(lives<=0)endGame(false);
+        lives--;ship.invincible=80;spawnParticles(ship.x+18,ship.y+10,C.hit,isMobile?5:10);updateLives();if(lives<=0)endGame(false);
       }
     });
 
@@ -1325,7 +1352,7 @@ function gLoop(){
       ctx.fillText(l.letter,l.x,l.y);
       if(!collected.includes(l.letter)&&collide(ship.x+4,ship.y+2,ship.w-8,ship.h-4,l.x-22,l.y-22,44,44)){
         const colLetter=l.letter;
-        collected.push(colLetter);spawnParticles(l.x,l.y,C.letter,18);
+        collected.push(colLetter);spawnParticles(l.x,l.y,C.letter,isMobile?8:18);
         // Retirer TOUTES les instances de cette lettre du jeu
         letterItems=letterItems.filter(li=>li.letter!==colLetter);
         document.getElementById('ls-'+colLetter).classList.add('got');
@@ -1369,7 +1396,17 @@ window._startGame=startGame_init;
 window._restartGame=_startGame_inner;
 
 /* Quand la souris entre dans le canvas → démarrer */
-gc.addEventListener('mouseenter',()=>{if(state==='waiting')state='playing';});
+// Curseur : disparaît dans le canvas, réapparaît en dehors
+gc.addEventListener('mouseenter',()=>{
+  if(state==='waiting') state='playing';
+  document.getElementById('cur-star').style.opacity='0';
+  curTrailEnabled=false;
+});
+gc.addEventListener('mouseleave',()=>{
+  // Réafficher le curseur étoile dès qu'on sort du canvas
+  document.getElementById('cur-star').style.opacity='1';
+  curTrailEnabled=true;
+});
 
 })();// fin IIFE jeu
 
@@ -1397,6 +1434,7 @@ function enterSite(){
   initReveal(); initLang();
 }
 window.enterSite=enterSite;
+document.getElementById('btn-skip-game').addEventListener('click',enterSite);
 
 /* ══════════════════════════════════════
    COURONNE FOND
