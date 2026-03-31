@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="cf-2fa-verify" content="none"/>
+  <meta http-equiv="x-no-auto-email-links" content="true"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Paul Calais — Ingénieur Informatique</title>
   <meta property="og:title" content="Paul Calais — Ingénieur Informatique · CESI Lille"/>
@@ -486,7 +488,7 @@
           <p class="p-text">Étudiant en 2ème année de cycle préparatoire ingénieur au CESI, je conjugue rigueur académique et engagement associatif fort en tant que membre du BDE. Fort de 7 ans de volley-ball en compétition et de plusieurs mandats de délégué, j'ai développé une réactivité et un esprit d'équipe que je souhaite mettre au service de projets informatiques innovants.</p>
           <ul class="c-list">
             <li><div class="c-gem"></div><span>06 10 47 26 09</span></li>
-            <li><div class="c-gem"></div><a href="mailto:paul.calais1@viacesi.fr">paul.calais1@viacesi.fr</a></li>
+            <li><div class="c-gem"></div><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#112;&#97;&#117;&#108;&#46;&#99;&#97;&#108;&#97;&#105;&#115;&#49;&#64;&#118;&#105;&#97;&#99;&#101;&#115;&#105;&#46;&#102;&#114;">&#112;&#97;&#117;&#108;&#46;&#99;&#97;&#108;&#97;&#105;&#115;&#49;&#64;&#118;&#105;&#97;&#99;&#101;&#115;&#105;&#46;&#102;&#114;</a></li>
             <li><div class="c-gem"></div><span>Lille, France</span></li>
             <li><div class="c-gem"></div><a href="https://www.linkedin.com/in/paul-calais-3a9258343" target="_blank" rel="noopener">LinkedIn — Paul Calais</a></li>
           </ul>
@@ -627,7 +629,7 @@
         N''hésitez pas à me contacter pour tout projet informatique innovant.
       </p>
       <div class="rv" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-        <a class="cta-btn" href="mailto:paul.calais1@viacesi.fr">Envoyer un email</a>
+        <a class="cta-btn" href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#112;&#97;&#117;&#108;&#46;&#99;&#97;&#108;&#97;&#105;&#115;&#49;&#64;&#118;&#105;&#97;&#99;&#101;&#115;&#105;&#46;&#102;&#114;">Envoyer un email</a>
         <a class="cta-btn" href="https://www.linkedin.com/in/paul-calais-3a9258343" target="_blank" rel="noopener">LinkedIn</a>
       </div>
     </div>
@@ -636,7 +638,7 @@
   <footer>
     <p class="foot-name">Paul Calais</p>
     <div class="foot-links">
-      <a href="mailto:paul.calais1@viacesi.fr">Email</a>
+      <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#112;&#97;&#117;&#108;&#46;&#99;&#97;&#108;&#97;&#105;&#115;&#49;&#64;&#118;&#105;&#97;&#99;&#101;&#115;&#105;&#46;&#102;&#114;">Email</a>
       <span>06 10 47 26 09</span>
       <a href="https://www.linkedin.com/in/paul-calais-3a9258343" target="_blank" rel="noopener">LinkedIn</a>
       <a href="#hero">↑ Haut</a>
@@ -654,6 +656,9 @@
 </div><!-- /site -->
 
 <script>
+/* ── Détection mobile globale (utilisée partout) ── */
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
 function buildCrownGroup(scale, withStand) {
   const s = scale;
   const crown = new THREE.Group();
@@ -964,17 +969,17 @@ let curTrailEnabled = true;
 
 /* ══ STARS + PARTICLES ══ */
 const sc=document.getElementById('stars');
-for(let i=0;i<120;i++){const s=document.createElement('div');s.className='star';const sz=.4+Math.random()*1.4;s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;animation-duration:${2+Math.random()*5}s;animation-delay:${Math.random()*7}s`;sc.appendChild(s);}
+for(let i=0;i<(isMobile?40:120);i++){const s=document.createElement('div');s.className='star';const sz=.4+Math.random()*1.4;s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;animation-duration:${2+Math.random()*5}s;animation-delay:${Math.random()*7}s`;sc.appendChild(s);}
 const pc=document.getElementById('ptcl');
-for(let i=0;i<30;i++){const p=document.createElement('div');p.className='pt';p.style.cssText=`left:${Math.random()*100}%;bottom:${Math.random()*12}%;width:${.8+Math.random()*1.2}px;height:${.8+Math.random()*1.2}px;animation-duration:${14+Math.random()*22}s;animation-delay:${Math.random()*20}s`;pc.appendChild(p);}
+for(let i=0;i<(isMobile?0:30);i++){const p=document.createElement('div');p.className='pt';p.style.cssText=`left:${Math.random()*100}%;bottom:${Math.random()*12}%;width:${.8+Math.random()*1.2}px;height:${.8+Math.random()*1.2}px;animation-duration:${14+Math.random()*22}s;animation-delay:${Math.random()*20}s`;pc.appendChild(p);}
 
 /* ══════════════════════════════════════════════
    ÉCRAN 1 — COURONNE + ORBITES
    Clic → plein écran → slide vers jeu
 ══════════════════════════════════════════════ */
 const iCv = document.getElementById('crown-canvas');
-const iRn = new THREE.WebGLRenderer({canvas:iCv,antialias:true,alpha:true});
-iRn.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const iRn = new THREE.WebGLRenderer({canvas:iCv,antialias:!isMobile,alpha:true});
+iRn.setPixelRatio(isMobile?1:Math.min(window.devicePixelRatio,2));
 iRn.setSize(iCv.clientWidth,iCv.clientHeight,false);
 iRn.setClearColor(0x000000,0);
 const iSc=new THREE.Scene(); addLights(iSc,1.0);
@@ -1117,8 +1122,7 @@ const msgS=document.getElementById('game-msg-sub');
 const msgB=document.getElementById('game-msg-btns');
 
 /* Taille responsive */
-/* Canvas plus petit sur mobile pour éviter les lags */
-const isMobile=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+/* isMobile déclaré globalement en haut du script */
 const GW=isMobile ? Math.min(480,window.innerWidth-8) : Math.min(720,window.innerWidth-16);
 const GH=Math.round(GW*.58);
 gc.width=GW; gc.height=GH;
@@ -1484,9 +1488,13 @@ document.getElementById('btn-skip-game').addEventListener('click',enterSite);
    COURONNE FOND
 ══════════════════════════════════════ */
 const bgCv = document.getElementById('bg-crown-canvas');
-const bgRn = new THREE.WebGLRenderer({canvas:bgCv, antialias:true, alpha:true});
-bgRn.setPixelRatio(Math.min(window.devicePixelRatio,2));
-bgRn.setSize(window.innerWidth, window.innerHeight, false);
+const bgRn = new THREE.WebGLRenderer({canvas:bgCv, antialias:!isMobile, alpha:true});
+bgRn.setPixelRatio(isMobile?1:Math.min(window.devicePixelRatio,2));
+// Sur mobile : canvas demi-taille rendu en CSS pleine taille = 4x moins de pixels
+const bgW = isMobile ? Math.round(window.innerWidth/2) : window.innerWidth;
+const bgH = isMobile ? Math.round(window.innerHeight/2) : window.innerHeight;
+bgRn.setSize(bgW, bgH, false);
+if(isMobile){ bgCv.style.width='100%'; bgCv.style.height='100%'; }
 bgRn.setClearColor(0x000000, 0);
 const bgSc = new THREE.Scene();
 addLights(bgSc, 0.7);
@@ -1504,10 +1512,10 @@ bgSc.add(bgCr);
 let bgT=0;
 (function animBg(){
   requestAnimationFrame(animBg);
+  if(isMobile) return; // Désactivé sur mobile pour les perfs
   bgT += .003;
   bgCr.rotation.y += .0014;
   bgCr.position.set(0, Math.sin(bgT)*.05, 0);
-  // Interpolation douce vers la cible Z
   bgCamZ += (bgCamZTgt - bgCamZ) * 0.018;
   bgCam.position.set(0, 1.0, bgCamZ);
   bgCam.lookAt(0, 0.6, 0);
@@ -1523,7 +1531,7 @@ const rainContainer = document.getElementById('star-rain');
 let rainInterval = null;
 
 function spawnStarRain(){
-  const COUNT       = 60;
+  const COUNT       = isMobile ? 20 : 60;
   const COMET_PROB  = 0.1;   // 10% de comètes
 
   // Distance diagonale fixe : droite→gauche + bas
@@ -1670,9 +1678,11 @@ function initLang(){
 
 
 window.addEventListener('resize',()=>{
-  bgRn.setSize(window.innerWidth,window.innerHeight,false);
-  bgCam.aspect=window.innerWidth/window.innerHeight;
-  bgCam.updateProjectionMatrix();
+  if(!isMobile){
+    bgRn.setSize(window.innerWidth,window.innerHeight,false);
+    bgCam.aspect=window.innerWidth/window.innerHeight;
+    bgCam.updateProjectionMatrix();
+  }
 });
 
 /* ══ MODAL PROJETS ══ */
